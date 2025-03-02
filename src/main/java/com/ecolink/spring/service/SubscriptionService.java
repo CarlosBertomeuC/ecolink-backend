@@ -19,8 +19,11 @@ public class SubscriptionService {
     }
 
     public void activateSubscription(UserBase user, SubscriptionType type, int durationDays) {
-        Subscription subscription = new Subscription();
-        subscription.setUser(user);
+        Subscription subscription = user.getSubscription();
+        if (subscription == null) {
+            subscription = new Subscription();
+            subscription.setUser(user);
+        }
         subscription.setType(type);
         subscription.setStartDate(LocalDate.now());
         subscription.setEndDate(LocalDate.now().plusDays(durationDays));

@@ -126,7 +126,6 @@ public ResponseEntity<String> cancelSubscription(@AuthenticationPrincipal UserBa
         try {
             // Procesar el pago
             PaymentResponse paymentResponse = paymentService.processPayment(paymentRequest);
-
             // Activar la suscripción si el pago es exitoso
             if (paymentResponse.isSuccessful()) {
                 subscriptionService.activateSubscription(user, paymentRequest.getSubscriptionType(), paymentRequest.getDurationDays());
