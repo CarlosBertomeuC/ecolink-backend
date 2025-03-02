@@ -2,30 +2,44 @@ package com.ecolink.spring.controller;
 
 import com.ecolink.spring.entity.SubscriptionType;
 import com.ecolink.spring.entity.UserBase;
+import com.ecolink.spring.service.PaymentService;
 import com.ecolink.spring.service.SubscriptionService;
 import com.ecolink.spring.service.UserBaseService;
+import com.ecolink.spring.dto.PaymentRequest;
+import com.ecolink.spring.dto.PaymentResponse;
 import com.ecolink.spring.entity.Subscription;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import org.springframework.web.bind.annotation.*;
+
+
+import com.ecolink.spring.repository.UserBaseRepository;
+import org.hibernate.Hibernate;
+
 
 import java.time.LocalDate;
 import java.util.Map;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/subscriptions")
 public class SubscriptionController {
+    @Autowired
+    private PaymentService paymentService;
+
 
     private final SubscriptionService subscriptionService;
+    private final UserBaseRepository userBaseRepository;
 
-    public SubscriptionController(SubscriptionService subscriptionService, UserBaseService userBaseService) {
+    public SubscriptionController(SubscriptionService subscriptionService, UserBaseService userBaseService, UserBaseRepository userBaseRepository) {
         this.subscriptionService = subscriptionService;
+        this.userBaseRepository = userBaseRepository;
     }
     @Operation(summary = "Activar una suscripción", description = "Activa una suscripción para un usuario específico.")
     @ApiResponses(value = {
@@ -41,12 +55,15 @@ public class SubscriptionController {
         if (user == null) {
             return ResponseEntity.badRequest().body("Usuario no encontrado");
         }
-        System.out.println("Usuario autenticado: " + user);
 
-        Subscription subscription = user.getSubscription();
+        // Initialize the subscription collection
+        UserBase userWithSubscription = userBaseRepository.findById(user.getId()).orElseThrow(() -> new RuntimeException("Usuario no encontrado"));
+        Hibernate.initialize(userWithSubscription.getSubscription());
+
+        Subscription subscription = userWithSubscription.getSubscription();
         if (subscription == null) {
             subscription = new Subscription();
-            subscription.setUser(user);
+            subscription.setUser(userWithSubscription);
         }
 
         subscription.setType(type);
@@ -57,6 +74,7 @@ public class SubscriptionController {
         return ResponseEntity.ok("Suscripción activada correctamente");
     }
 
+    //Esto es para cancelar la suscripción desde el perfil del usuario
     @PostMapping("/cancel")
 public ResponseEntity<String> cancelSubscription(@AuthenticationPrincipal UserBase user) {
     if (user == null) {
@@ -101,6 +119,24 @@ public ResponseEntity<String> cancelSubscription(@AuthenticationPrincipal UserBa
         Map<String, String> response = Map.of("planType", type);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping("/pay")
+    public ResponseEntity<?> paySubscription(@AuthenticationPrincipal UserBase user, @RequestBody PaymentRequest paymentRequest) {
+        try {
+            // Procesar el pago
+            PaymentResponse paymentResponse = paymentService.processPayment(paymentRequest);
+
+            // Activar la suscripción si el pago es exitoso
+            if (paymentResponse.isSuccessful()) {
+                subscriptionService.activateSubscription(user, paymentRequest.getSubscriptionType(), paymentRequest.getDurationDays());
+                return ResponseEntity.ok("Suscripción activada correctamente");
+            } else {
+                return ResponseEntity.badRequest().body("Error en el pago");
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Error en el servidor");
+        }
     }
 
 }
