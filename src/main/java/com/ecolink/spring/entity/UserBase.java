@@ -18,6 +18,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Inheritance;
 import jakarta.persistence.InheritanceType;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.PrePersist;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.Getter;
@@ -59,10 +61,28 @@ public abstract class UserBase implements UserDetails {
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     List<Comment> comments;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Subscription subscription;
+
+    @PrePersist
+    public void prePersist() {
+        if (subscription == null) {
+            subscription = new Subscription();
+            subscription.setType(SubscriptionType.FREE);
+            subscription.setStartDate(LocalDate.now());
+            subscription.setUser(this);
+        }
+    }
+
     public void addComment(Comment comment) {
         comment.setUser(this);
         this.comments.add(comment);
     }
+    
+    public String subscriptionType() {
+        return subscription.getType().toString();
+    }
+    
 
     public void addXp(Long xpToAdd) {
         if (this.xp == null ||this.xp < 0) {
