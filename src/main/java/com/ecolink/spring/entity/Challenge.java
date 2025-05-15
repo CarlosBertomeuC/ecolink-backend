@@ -46,6 +46,8 @@ public class Challenge {
     private BigDecimal budget;
     private LocalDate endDate;
     private LocalDate startDate;
+    @Column(nullable = false)
+    private Boolean premium = false;
 
     @OneToMany(mappedBy = "challenge", orphanRemoval = true)
     List<Proposal> proposals = new ArrayList<>();

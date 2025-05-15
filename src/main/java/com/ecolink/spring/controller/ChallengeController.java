@@ -66,7 +66,6 @@ public class ChallengeController {
             if (challenges.isEmpty()) {
                 throw new ChallengeNotFoundException("No se han encontrado challenges con el filtrado");
             }
-            
 
             List<ChallengeDTO> dtoList = challenges.getContent().stream()
                     .map(challengeDtoConverter::converChallengeToDto)
@@ -333,5 +332,30 @@ public class ChallengeController {
                     "Ocurrió un error interno en el servidor");
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorDetails);
         }
+    }
+
+    @PutMapping("/upgrade/{id}")
+    public ResponseEntity<?> upgradeChallenge(@AuthenticationPrincipal UserBase user, @PathVariable Long id) {
+        if (user == null || !(user instanceof Company)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorDetails(
+                    HttpStatus.UNAUTHORIZED.value(), "Only companies can upgrade challenges"));
+        }
+
+        Company company = (Company) user;
+        Challenge challenge = challengeService.findByIdAndCompany(id, company);
+
+        if (challenge == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(
+                    HttpStatus.NOT_FOUND.value(), "Challenge not found or not owned by the company"));
+        }
+
+        boolean upgraded = challengeService.togglePremium(challenge);
+
+        if (!upgraded) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new ErrorDetails(
+                    HttpStatus.BAD_REQUEST.value(), "Challenge is already premium"));
+        }
+
+        return ResponseEntity.ok(new SuccessDetails(HttpStatus.OK.value(), "Challenge upgraded to premium"));
     }
 }

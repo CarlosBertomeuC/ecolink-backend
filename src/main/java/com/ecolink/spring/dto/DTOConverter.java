@@ -258,6 +258,7 @@ public class DTOConverter {
                 .map(this::convertOdsWithoutIdToDto)
                 .collect(Collectors.toList());
         challengeDto.setOdsList(odsDto);
+        challengeDto.setPremium(challenge.getPremium());
         return challengeDto;
     }
 
@@ -272,6 +273,7 @@ public class DTOConverter {
                 .map(this::convertOdsWithoutIdToDto)
                 .collect(Collectors.toList());
         challengeDto.setOdsList(odsDto);
+        challengeDto.setPremium(challenge.getPremium());
 
         return challengeDto;
     }

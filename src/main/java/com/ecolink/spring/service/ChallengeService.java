@@ -75,5 +75,10 @@ public class ChallengeService {
     public void delete(Challenge actuaChallenge) {
         repository.delete(actuaChallenge);
     }
+    public boolean togglePremium(Challenge challenge) {
+    challenge.setPremium(!challenge.getPremium());
+    repository.save(challenge);
+    return challenge.getPremium();
+    }
 
 }

@@ -21,4 +21,5 @@ public class ChallengeDTO {
     Integer numberOfParticipans;
     List<String> requirements;
     List<String> benefits;
+    private Boolean premium;
 }

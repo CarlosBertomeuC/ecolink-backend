@@ -22,4 +22,5 @@ public class ChallengeFindDTO {
     List<String> benefits;
     private Integer numberOfParticipans;
     List<OdsWithoutIdDTO> odsList;
+    Boolean premium;
 }
