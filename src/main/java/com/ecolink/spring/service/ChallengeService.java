@@ -76,9 +76,11 @@ public class ChallengeService {
         repository.delete(actuaChallenge);
     }
     public boolean togglePremium(Challenge challenge) {
-    challenge.setPremium(!challenge.getPremium());
+    Boolean current = challenge.getPremium();
+    challenge.setPremium(current == null ? Boolean.TRUE : !current);
     repository.save(challenge);
-    return challenge.getPremium();
-    }
+    return true;
+}
+
 
 }
