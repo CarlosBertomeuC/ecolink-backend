@@ -335,23 +335,23 @@ public class ChallengeController {
     }
 
     @PutMapping("/upgrade/{id}")
-public ResponseEntity<?> upgradeChallenge(@AuthenticationPrincipal UserBase user, @PathVariable Long id) {
-    if (user == null || !(user instanceof Company)) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorDetails(
-                HttpStatus.UNAUTHORIZED.value(), "Only companies can upgrade challenges"));
+    public ResponseEntity<?> upgradeChallenge(@AuthenticationPrincipal UserBase user, @PathVariable Long id) {
+        if (user == null || !(user instanceof Company)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(new ErrorDetails(
+                    HttpStatus.UNAUTHORIZED.value(), "Only companies can upgrade challenges"));
+        }
+
+        Company company = (Company) user;
+        Challenge challenge = challengeService.findByIdAndCompany(id, company);
+
+        if (challenge == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(
+                    HttpStatus.NOT_FOUND.value(), "Challenge not found or not owned by the company"));
+        }
+
+        challengeService.togglePremium(challenge);
+
+        return ResponseEntity.ok(new SuccessDetails(HttpStatus.OK.value(), "Challenge premium status toggled"));
     }
-
-    Company company = (Company) user;
-    Challenge challenge = challengeService.findByIdAndCompany(id, company);
-
-    if (challenge == null) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new ErrorDetails(
-                HttpStatus.NOT_FOUND.value(), "Challenge not found or not owned by the company"));
-    }
-
-    challengeService.togglePremium(challenge);
-
-    return ResponseEntity.ok(new SuccessDetails(HttpStatus.OK.value(), "Challenge premium status toggled"));
-}
 
 }
